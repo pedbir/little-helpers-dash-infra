@@ -51,7 +51,11 @@ jobs:
             echo "PROJECT_ID=little-helpers-staging" >> $GITHUB_ENV
             echo "SERVICE_NAME=little-helpers-staging" >> $GITHUB_ENV
           fi
-          echo "IMAGE=${{ env.REGION }}-docker.pkg.dev/${PROJECT_ID}/little-helpers-${ENV}/app" >> $GITHUB_ENV
+
+      - name: Set image tag
+        run: |
+          ENV="${{ github.event.inputs.environment || 'staging' }}"
+          echo "IMAGE=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/little-helpers-${ENV}/app" >> $GITHUB_ENV
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
@@ -69,51 +73,3 @@ jobs:
             --region "${{ env.REGION }}" \
             --project "${{ env.PROJECT_ID }}" \
             --quiet
-
-  terraform-plan:
-    name: Terraform Plan
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    permissions:
-      contents: read
-      id-token: write
-      pull-requests: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-          service_account: ${{ vars.DEPLOYER_SA }}
-
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.5"
-
-      - name: Terraform Init
-        run: terraform init -backend-config=environments/staging/backend.hcl
-
-      - name: Terraform Plan
-        run: |
-          terraform plan -no-color \
-            -var-file=environments/staging/terraform.tfvars \
-            -var="supabase_url=placeholder" \
-            -var="supabase_anon_key=placeholder" \
-            -out=tfplan 2>&1 | tee plan_output.txt
-
-      - name: Post plan to PR
-        uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
-        with:
-          script: |
-            const fs = require('fs');
-            const plan = fs.readFileSync('plan_output.txt', 'utf8');
-            const truncated = plan.length > 60000 ? plan.substring(0, 60000) + '\n... (truncated)' : plan;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## Terraform Plan\n\n\`\`\`\n${truncated}\n\`\`\``
-            });

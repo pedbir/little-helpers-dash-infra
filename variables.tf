@@ -36,6 +36,12 @@ variable "supabase_anon_key" {
   sensitive   = true
 }
 
+variable "github_repo" {
+  description = "GitHub repository in owner/repo format for WIF"
+  type        = string
+  default     = "pedbir/little-helpers-dash-infra"
+}
+
 variable "alert_email" {
   description = "Email address for monitoring alert notifications"
   type        = string

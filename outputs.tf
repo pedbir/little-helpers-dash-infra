@@ -22,3 +22,16 @@ output "uptime_check_id" {
   description = "Monitoring uptime check ID"
   value       = module.monitoring.uptime_check_id
 }
+
+output "wif_provider_name" {
+  description = "WIF provider name (set as WIF_PROVIDER GitHub variable)"
+  value       = module.wif.provider_name
+}
+
+output "github_actions_setup" {
+  description = "GitHub repo variables to configure after terraform apply"
+  value = {
+    WIF_PROVIDER = module.wif.provider_name
+    DEPLOYER_SA  = module.iam.deployer_sa_email
+  }
+}
