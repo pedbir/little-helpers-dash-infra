@@ -40,6 +40,20 @@ resource "google_project_iam_member" "deployer_ar_writer" {
   member  = "serviceAccount:${google_service_account.deployer.email}"
 }
 
+# Deployer needs to read project resources during terraform plan
+resource "google_project_iam_member" "deployer_viewer" {
+  project = var.project_id
+  role    = "roles/viewer"
+  member  = "serviceAccount:${google_service_account.deployer.email}"
+}
+
+# Deployer needs to read/write Terraform state in GCS
+resource "google_storage_bucket_iam_member" "deployer_tfstate" {
+  bucket = var.tfstate_bucket
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.deployer.email}"
+}
+
 # Deployer needs to act as the Cloud Run SA when deploying
 resource "google_service_account_iam_member" "deployer_acts_as_cloud_run" {
   service_account_id = google_service_account.cloud_run.name

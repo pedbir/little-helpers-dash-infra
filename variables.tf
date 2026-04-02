@@ -36,6 +36,11 @@ variable "supabase_anon_key" {
   sensitive   = true
 }
 
+variable "tfstate_bucket" {
+  description = "GCS bucket name for Terraform state"
+  type        = string
+}
+
 variable "github_repo" {
   description = "GitHub repository in owner/repo format for WIF"
   type        = string

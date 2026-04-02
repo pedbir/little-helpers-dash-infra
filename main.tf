@@ -24,8 +24,9 @@ resource "google_project_service" "apis" {
 module "iam" {
   source = "./modules/iam"
 
-  project_id  = var.project_id
-  environment = var.environment
+  project_id     = var.project_id
+  environment    = var.environment
+  tfstate_bucket = var.tfstate_bucket
 
   depends_on = [google_project_service.apis]
 }
