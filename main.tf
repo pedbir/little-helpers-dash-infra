@@ -54,3 +54,15 @@ module "cloud_run" {
 
   depends_on = [google_project_service.apis]
 }
+
+# Monitoring - Uptime checks and alerting
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  project_id    = var.project_id
+  environment   = var.environment
+  cloud_run_url = module.cloud_run.service_url
+  alert_email   = var.alert_email
+
+  depends_on = [module.cloud_run]
+}

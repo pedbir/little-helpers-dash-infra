@@ -35,3 +35,9 @@ variable "supabase_anon_key" {
   type        = string
   sensitive   = true
 }
+
+variable "alert_email" {
+  description = "Email address for monitoring alert notifications"
+  type        = string
+  default     = "alerts@childroutine.app"
+}

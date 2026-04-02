@@ -17,3 +17,8 @@ output "artifact_registry_repo" {
   description = "Artifact Registry repository URL"
   value       = module.cloud_run.artifact_registry_repo
 }
+
+output "uptime_check_id" {
+  description = "Monitoring uptime check ID"
+  value       = module.monitoring.uptime_check_id
+}
