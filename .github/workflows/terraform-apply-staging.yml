@@ -1,0 +1,49 @@
+name: Terraform Apply (Staging)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.tf"
+      - "**/*.hcl"
+      - "modules/**"
+      - "environments/**"
+
+concurrency:
+  group: terraform-apply-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  REGION: europe-north1
+
+jobs:
+  apply:
+    name: Apply (staging)
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOYER_SA }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5"
+
+      - name: Terraform Init
+        run: terraform init -backend-config=environments/staging/backend.hcl
+
+      - name: Terraform Apply
+        run: |
+          terraform apply -auto-approve \
+            -var-file=environments/staging/terraform.tfvars \
+            -var="supabase_url=placeholder" \
+            -var="supabase_anon_key=placeholder"
