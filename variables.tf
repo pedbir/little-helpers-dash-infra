@@ -35,3 +35,20 @@ variable "supabase_anon_key" {
   type        = string
   sensitive   = true
 }
+
+variable "tfstate_bucket" {
+  description = "GCS bucket name for Terraform state"
+  type        = string
+}
+
+variable "github_repo" {
+  description = "GitHub repository in owner/repo format for WIF"
+  type        = string
+  default     = "pedbir/little-helpers-dash-infra"
+}
+
+variable "alert_email" {
+  description = "Email address for monitoring alert notifications"
+  type        = string
+  default     = "alerts@childroutine.app"
+}

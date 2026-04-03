@@ -1,4 +1,5 @@
 project_id  = "little-helpers-staging"
 region      = "europe-north1"
 environment = "staging"
-domain      = "staging.childroutine.app"
+domain         = "staging.childroutine.app"
+tfstate_bucket = "little-helpers-tfstate-staging"
