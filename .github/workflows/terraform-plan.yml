@@ -2,9 +2,9 @@ name: Terraform Plan (PR)
 
 on:
   pull_request:
-    branches: [main]
     paths:
-      - "*.tf"
+      - "**/*.tf"
+      - "**/*.hcl"
       - "modules/**"
       - "environments/**"
 
