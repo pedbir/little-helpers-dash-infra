@@ -22,56 +22,48 @@ The application code (including Dockerfile and nginx.conf) lives in the app repo
 
 Supabase project: `little-helpers` (ref: `yikuadwqsxcfqypxvrxa`)
 
-## Setup
+## Making Changes
 
-### 1. Bootstrap remote state (once per environment)
+Infrastructure is already bootstrapped and applied for both environments. To make changes:
 
-```bash
-chmod +x bootstrap.sh
-./bootstrap.sh little-helpers-staging staging
-./bootstrap.sh little-helpers-production production
-```
+### 1. Create a branch and modify Terraform files
 
-### 2. Initialize Terraform
+The `terraform-plan.yml` workflow will automatically run `terraform plan` on your PR and post the results as a comment.
+
+### 2. Apply changes
 
 ```bash
+# Initialize with the target environment backend
 terraform init -backend-config=environments/staging/backend.hcl
+
+# Plan and review
+terraform plan -var-file=environments/staging/terraform.tfvars \
+  -var="supabase_url=$SUPABASE_URL" \
+  -var="supabase_anon_key=$SUPABASE_ANON_KEY"
+
+# Apply
+terraform apply -var-file=environments/staging/terraform.tfvars \
+  -var="supabase_url=$SUPABASE_URL" \
+  -var="supabase_anon_key=$SUPABASE_ANON_KEY"
 ```
 
-### 3. Plan and apply
-
-```bash
-# Secrets must be passed via env vars or a .tfvars file (never commit secrets)
-terraform plan \
-  -var-file=environments/staging/terraform.tfvars \
-  -var="supabase_url=https://yikuadwqsxcfqypxvrxa.supabase.co" \
-  -var="supabase_anon_key=<from-supabase-dashboard>"
-
-terraform apply \
-  -var-file=environments/staging/terraform.tfvars \
-  -var="supabase_url=https://yikuadwqsxcfqypxvrxa.supabase.co" \
-  -var="supabase_anon_key=<from-supabase-dashboard>"
-```
-
-### 4. Configure GitHub repo variables (after terraform apply)
-
-After applying, Terraform outputs the values needed for GitHub Actions:
-
-```bash
-terraform output github_actions_setup
-```
-
-Set these as GitHub repository variables:
-
-| Variable | Source |
-|---|---|
-| `WIF_PROVIDER` | `terraform output wif_provider_name` |
-| `DEPLOYER_SA` | `terraform output deployer_sa_email` |
+Repeat with `environments/production/` for production changes.
 
 ## CI/CD
 
-- **`deploy.yml`** — Deploys to Cloud Run on push to `main` or manual dispatch. Uses WIF for keyless auth.
 - **`terraform-plan.yml`** — Runs `terraform plan` on PRs that touch `.tf` files and posts the plan as a PR comment.
+- **App deploys** — The Cloud Run deploy workflow lives in the [app repo](https://github.com/pedbir/little-helpers-dash).
+
+### GitHub Repository Variables
+
+These are already configured:
+
+| Variable | Description |
+|---|---|
+| `WIF_PROVIDER` | Workload Identity Federation provider resource name |
+| `DEPLOYER_SA` | CI/CD deployer service account email |
+
+To verify or update: `terraform output github_actions_setup`
 
 ## Modules
 
@@ -82,6 +74,20 @@ Set these as GitHub repository variables:
 | `modules/cloud-run` | Cloud Run service + Artifact Registry |
 | `modules/wif` | Workload Identity Federation for GitHub Actions |
 | `modules/monitoring` | Uptime checks and alert policies |
+
+## Initial Setup Reference
+
+These steps were already completed. Kept here for reference only.
+
+<details>
+<summary>Bootstrap (done)</summary>
+
+```bash
+# Create GCS state buckets (once per environment)
+./bootstrap.sh little-helpers-staging staging
+./bootstrap.sh little-helpers-production production
+```
+</details>
 
 ## Cost Notes
 
