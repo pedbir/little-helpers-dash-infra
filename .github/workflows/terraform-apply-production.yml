@@ -1,0 +1,55 @@
+name: Terraform Apply (Production)
+
+on:
+  workflow_run:
+    workflows: ["Terraform Apply (Staging)"]
+    types: [completed]
+
+concurrency:
+  group: terraform-apply-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  REGION: europe-north1
+
+jobs:
+  apply:
+    name: Apply (production)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOYER_SA }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5"
+
+      - name: Terraform Init
+        run: terraform init -backend-config=environments/production/backend.hcl
+
+      - name: Terraform Plan
+        run: |
+          terraform plan -no-color \
+            -var-file=environments/production/terraform.tfvars \
+            -var="supabase_url=placeholder" \
+            -var="supabase_anon_key=placeholder"
+
+      - name: Terraform Apply
+        run: |
+          terraform apply -auto-approve \
+            -var-file=environments/production/terraform.tfvars \
+            -var="supabase_url=placeholder" \
+            -var="supabase_anon_key=placeholder"
