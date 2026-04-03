@@ -47,11 +47,18 @@ resource "google_project_iam_member" "deployer_viewer" {
   member  = "serviceAccount:${google_service_account.deployer.email}"
 }
 
-# Deployer needs to read/write Terraform state in GCS
+# Deployer needs to read/write Terraform state and bucket IAM in GCS
 resource "google_storage_bucket_iam_member" "deployer_tfstate" {
   bucket = var.tfstate_bucket
-  role   = "roles/storage.objectAdmin"
+  role   = "roles/storage.admin"
   member = "serviceAccount:${google_service_account.deployer.email}"
+}
+
+# Deployer needs to read secrets during terraform plan
+resource "google_project_iam_member" "deployer_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.deployer.email}"
 }
 
 # Deployer needs to act as the Cloud Run SA when deploying
